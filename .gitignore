@@ -1,15 +1,29 @@
-# Created by https://www.gitignore.io
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
 
-### FreePascal ###
-*.lps
-*.compiled
-*.[oa]
-*.ppu
-*.rst
-*.cgi
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
 *.exe
-*.log
-*.bak*
-fp.ini
-fp.cfg
-fp.dsk
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
