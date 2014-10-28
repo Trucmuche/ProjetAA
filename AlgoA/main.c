@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void saisiea(char *t)
+void chaine(char *t)
 {
     int i ;
     char car;
@@ -18,11 +18,11 @@ void saisiea(char *t)
 }
 
 //Partie a 2eme point , on met dans un tableau ajuster
-char *saisieb()
+char *saisie()
 {
     int taille ;
     char *d , tmp[100];
-    saisiea(tmp);//A
+    chaine(tmp);//A
     taille=strlen(tmp)+1;//B
     d=(char*)malloc(taille*sizeof(char));
     strcpy(d,tmp);
@@ -32,6 +32,6 @@ char *saisieb()
 int main()
 {
     char *s;
-    s = saisieb();
+    s = saisie();
     printf("%s",s);
 }
