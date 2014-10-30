@@ -1,7 +1,6 @@
 # depslib dependency file v1.0
-1414612778 source:f:\projetaa\algoa\main.c
+1414709501 source:f:\projetaa\algoa\main.c
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
-	<ctype.h>
 

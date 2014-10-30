@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct noeud
+{
+    char valeur;
+    struct noeud *gauche;
+    struct noeud *droite;
+} noeud ;
+
 int testEquation(char *t)
 {
     int taille, i=0,f=0,f2=0,taille2=0;
@@ -21,7 +28,7 @@ int testEquation(char *t)
         return 1;
     }
     f=0;
-    //Test si avant le egal, on a lettre et après, on a nombre
+    //Test si avant le egal, on a lettre
     i=0;
     do
     {
@@ -53,7 +60,7 @@ int testEquation(char *t)
         printf("%d\n",i);
         printf("caractere : %c\n",t[i]);
 
-        if ((toupper(t[i]) <= 48 || toupper(t[i]) >= 57) || ((toupper(t[i]) <= 39 || (toupper(t[i]) == 45)) || (toupper(t[i]) != 44))) //Si t n'est ni un nombre, ni une parenthèse, ni un *, ni un +, ni un -
+        if ((t[i] != '+') || (t[i] != '-') || (t[i] != '*') || (t[i] != '(') || (t[i] != ')') || (t[i] <= 47) || (t[i] >= 58)) //Si t n'est ni un nombre, ni une parenthèse, ni un *, ni un +, ni un -
         {
             printf("ERREUR : Caractère non autorisé trouvé après le signe =. Veuillez rééssayer.\n");
             return 3;
@@ -105,9 +112,104 @@ char *saisie()
     return d;
 }
 
+noeud *creerArbre(char *t)
+{
+    noeud *s = malloc(sizeof(noeud));
+    int i=0,taille=0, taille2=0;
+    taille=strlen(t);
+
+    s->valeur = t[0];
+    s->gauche = NULL;
+    s->droite = NULL;
+
+    do
+    {
+       // printf("caractere : %c\n",t[i]);
+       printf("Yolo\n");
+
+        if ((t[i] == '+') || (t[i] == '-') || (t[i] == '*')) //Si t n'est ni un nombre, ni une parenthèse, ni un *, ni un +, ni un -
+        {
+            ajouterNoeud(s,t[i],0);
+            ajouterNoeud(s,t[i-1],1);
+            ajouterNoeud(s,t[i+1],0);
+        }
+        i++;
+    }while (i< taille);
+
+
+    i=0;
+    do
+    {
+        i++;
+        taille2++;
+    }while (i<= taille); // compte le nombre de caractere avant le =
+
+    return s;
+}
+
+void ajouterNoeud(noeud **arbre, char valeur, int dir)
+{
+    noeud *noeudfct;
+    noeud *arbrefct = *arbre;
+
+    noeud *elem = malloc(sizeof(noeud));
+    elem->valeur = valeur;
+    elem->gauche = NULL;
+    elem->droite = NULL;
+    printf("Valeur de l'element ajouté %d\n", elem->valeur);
+
+    if (dir == 0)
+    {
+        if(arbrefct)
+        do
+        {
+            noeudfct = arbrefct;
+            arbrefct = arbrefct->droite;
+            if(!arbrefct)
+            {
+                noeudfct->droite = elem;
+            }
+        }while(arbrefct);
+    }
+    else if (dir == 1)
+    {
+        if(arbrefct)
+        do
+        {
+            noeudfct = arbrefct;
+            arbrefct = arbrefct->droite;
+            if(!arbrefct)
+            {
+                noeudfct->gauche = elem;
+            }
+        }while(arbrefct);
+    }
+}
+
+void affichageEquation(noeud *arbre)
+{
+    printf("Wow\n");
+    if(arbre == NULL)
+        exit(1);
+    else if ((arbre->valeur == '+') || (arbre->valeur == '-') || (arbre->valeur == '*'))
+    {
+        affichageEquation(arbre->gauche);
+        printf("%c",arbre->valeur);
+        affichageEquation(arbre->droite);
+    }
+    else
+        printf("%c",arbre->valeur);
+}
+
 int main()
 {
     char *s;
-    s = saisie();
-    printf("%s",s);
+    noeud *arbre = NULL;
+
+    s = "A=1+2";
+    arbre = creerArbre(s);
+    affichageEquation(s);
+
+
+    printf("Fin %s\n",s);
 }
