@@ -15,35 +15,58 @@ int conversionEntier(char car)
     return car-48;
 }
 
+int nombre(int a, int b)
+{
+    return (a*10)+b;
+}
+
+int estTuUnChiffre(char car)
+{
+    if ((car == '+') || (car == '-') || (car == '*') || (car == '(') || (car == ')'))
+        return 0;
+    else
+        return 1;
+}
+
+int estTuUnOperande(char car)
+{
+    if ((car == '+') || (car == '-') || (car == '*'))
+        return 1;
+    else
+        return 0;
+}
+
 noeud *creerArbre(char *t)
 {
     noeud *s = malloc(sizeof(noeud));
-    int i=0,taille=0, taille2=0;
+    int i=2,taille=0; // i initialisé à 2 pour sauté le =
     taille=strlen(t);
 
-    s->valeur = conversionEntier(t[0]);
-    s->oper = NULL;
+    s->valeur = t[0]; // implicitement, le caractère est transformé en Code ASCII
+    s->oper = "=";  // permet de dire que nous sommes bien dans le premier élement pour la fonction d'affichage
     s->gauche = NULL;
     s->droite = NULL;
 
     do
     {
-        if ((t[i] == '+') || (t[i] == '-') || (t[i] == '*')) //Si t est soit +, soit -, soit *
+        if ((t[i] == '+') || (t[i] == '-') || (t[i] == '*'))  //Si t est soit +, soit -, soit *, soit
         {
+            printf("dafuk?\n");
             ajouterNoeud(s,t[i],0,1);
-            ajouterNoeud(s,t[i-1],1,0);
-            ajouterNoeud(s,t[i+1],0,0);
+            printf("dafuk?\n");
+            //Ne pas oublier de faire une conversion en nombre à 2 digits si on le doit
+            if (estTuUnChiffre(t[i-2]))
+                ajouterNoeud(s,nombre(t[i-2],t[i-1]),1,0);
+            else
+                ajouterNoeud(s,t[i-1],1,0);
+
+            if (estTuUnChiffre(t[i+2]))
+                ajouterNoeud(s,nombre(t[i+1],t[i+2]),0,0);
+            else
+                ajouterNoeud(s,t[i+1],0,0);
         }
         i++;
-    }while (i< taille);
-
-
-    i=0;
-    do
-    {
-        i++;
-        taille2++;
-    }while (i<= taille); // compte le nombre de caractere avant le =
+    }while (i<= taille);
 
     return s;
 }
@@ -101,7 +124,7 @@ void calculEquation(noeud ** arbre)
 {
     noeud *noeudfct;
     noeud *arbrefct = *arbre;
-    // On teste si on a bien que des nombres pour calculer
+    // On teste si on a bien que des nombres pour calculer sinon, on redescend d'un niveau pour effectuer l'operation plus bas
     noeudfct = arbrefct->gauche;
     if ((noeudfct->oper == '*') || (noeudfct->oper == '+') || (noeudfct->oper == '-'))
     {
@@ -114,26 +137,59 @@ void calculEquation(noeud ** arbre)
     }
     // Si on a bien que des nombres après chaque opérandes, on peut calculer
     if (arbrefct->oper == '*')
-        arbrefct->valeur = (char)(arbrefct->gauche->valeur * arbrefct->droite->valeur);
+    {
+        arbrefct->valeur = arbrefct->gauche->valeur * arbrefct->droite->valeur;
+        arbrefct->oper = NULL;
+    }
     else if (arbrefct->oper == '+')
-        arbrefct->valeur = (char)(arbrefct->gauche->valeur + arbrefct->droite->valeur);
+    {
+        arbrefct->valeur = arbrefct->gauche->valeur + arbrefct->droite->valeur;
+        arbrefct->oper = NULL;
+    }
     else if (arbrefct->oper == '-')
-        arbrefct->valeur = (char)(arbrefct->gauche->valeur - arbrefct->droite->valeur);
-    return 0;
+    {
+        arbrefct->valeur = arbrefct->gauche->valeur - arbrefct->droite->valeur;
+        arbrefct->oper = NULL;
+    }
 }
 
 void affichageEquation(noeud *arbre)
 {
-    if(arbre == NULL)
-        return 0;
-    else if ((arbre->oper == '+') || (arbre->oper == '-') || (arbre->oper == '*'))
+    noeud *noeudfct;
+    noeud *arbrefct = arbre;
+    noeudfct = arbrefct;
+
+    if(noeudfct == NULL)
+        return;
+    else if (estTuUnOperande(noeudfct->oper) == 0)//Ne tombre içi que si on est au début, avant le égal
     {
-        affichageEquation(arbre->gauche);
-        printf("%c",arbre->oper);
-        affichageEquation(arbre->droite);
+        printf("%c%c",noeudfct->valeur,noeudfct->oper);
+        affichageEquation(arbrefct->droite);
     }
-    else
-        printf("%d",arbre->valeur);
+    else if((arbre->oper == '+') || (arbre->oper == '-') || (arbre->oper == '*'))
+    {
+        noeudfct = arbrefct->gauche; //positionnement à gauche
+
+        if (estTuUnOperande(noeudfct->oper)) //on va verifier si on a un operande sur la gauche et si c'est le cas, on ouvre une parenthése et on affiche recursivement
+        {
+            printf("(");
+            affichageEquation(noeudfct);
+            printf(")");
+        }
+
+        noeudfct = arbrefct->droite;
+
+        if (estTuUnOperande(noeudfct->oper)) //même verification sur la droite
+        {
+            printf("(");
+            affichageEquation(noeudfct);
+            printf(")");
+        }
+
+        //enfin, on peut afficher l'operation
+
+        printf("%d%c%d",arbre->gauche,arbre->oper,arbre->droite->valeur);
+    }
 }
 
 int main()
@@ -144,7 +200,7 @@ int main()
     s = "A=1+2";
     printf("%s",s);
     arbre = creerArbre(s);
-    affichageEquation(s);
+    //affichageEquation(s);
 
 
     printf("Fin %s\n",s);
