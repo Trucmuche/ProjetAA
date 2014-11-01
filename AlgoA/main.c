@@ -74,12 +74,12 @@ noeud *creerArbre(char *t)
                 {
                 //Ne pas oublier de faire une conversion en nombre à 2 digits si on le doit
                     if (estTuUnChiffre(t[i-2]))
-                        ajouterNoeud(s,nombre(t[i-2],t[i-1]),1);
+                        ajouterNoeud(s,nombre(conversionEntier(t[i-2]),conversionEntier(t[i-1])),1);
                     else
                         ajouterNoeud(s,t[i-1],1);
 
                     if (estTuUnChiffre(t[i+2]))
-                        ajouterNoeud(s,nombre(t[i+1],t[i+2]),0);
+                        ajouterNoeud(s,nombre(conversionEntier(t[i+1]),conversionEntier(t[i+2])),0);
                     else
                         ajouterNoeud(s,t[i+1],0);
                 }
