@@ -39,45 +39,69 @@ int estTuUnOperande(char car)
 noeud *creerArbre(char *t)
 {
     noeud *s = malloc(sizeof(noeud));
-    int i=2,taille=0; // i initialisé à 2 pour sauté le =
+    int i=2,taille=0,nbPOuv=0,nbP=0,tolerance=0; // i initialisé à 2 pour sauté le =
     taille=strlen(t);
 
     s->valeur = t[0]; // implicitement, le caractère est transformé en Code ASCII
-    s->oper = "=";  // permet de dire que nous sommes bien dans le premier élement pour la fonction d'affichage
+    s->oper = '=';  // permet de dire que nous sommes bien dans le premier élement pour la fonction d'affichage
     s->gauche = NULL;
     s->droite = NULL;
 
-    do
+    //maintenant on doit en fonction des parenthèse établir une hierarchie
+    //Utilisation d'une variable de tolérance, permettant de refaire des test de aractères tant que le nombre de parenthèse tolérée <= nombre de parenthèse dans la fonction
+    while (tolerance <= nbP)
     {
-        if ((t[i] == '+') || (t[i] == '-') || (t[i] == '*'))  //Si t est soit +, soit -, soit *, soit
+        while (i<= taille)
         {
-            printf("dafuk?\n");
-            ajouterNoeud(s,t[i],0,1);
-            printf("dafuk?\n");
-            //Ne pas oublier de faire une conversion en nombre à 2 digits si on le doit
-            if (estTuUnChiffre(t[i-2]))
-                ajouterNoeud(s,nombre(t[i-2],t[i-1]),1,0);
-            else
-                ajouterNoeud(s,t[i-1],1,0);
+            //gestion du nombre de parenthèse
+            if (t[i] == '(')
+            {
+                nbPOuv++;
+                nbP++;
+            }
 
-            if (estTuUnChiffre(t[i+2]))
-                ajouterNoeud(s,nombre(t[i+1],t[i+2]),0,0);
-            else
-                ajouterNoeud(s,t[i+1],0,0);
+            if ((t[i] == ')') && (nbPOuv != 0)) // même si ça ne devrait jamais arriver, simple sécurité
+                nbPOuv--;
+
+            if (((t[i] == '+') || (t[i] == '-') || (t[i] == '*')) && (nbPOuv == tolerance))  //Si t est soit +, soit -, soit * et qu'en plus, le nombre de parenthèse ouverte est identique au nombre de parenthèse tolérée
+            {
+                printf("Caractère entrant : %c\n",t[i]);
+                printf("dafuk?\n");
+                ajouterNoeud(s,t[i],0);
+                printf("dafuka?\n");
+                //On ajoute à la suite les caractères précedants et suivant celui traité uniquement si on a pas de parenthése aant et après l'opérateur
+                if ((estTuUnChiffre(t[i-1])) && (estTuUnChiffre(t[i+1])))
+                {
+                //Ne pas oublier de faire une conversion en nombre à 2 digits si on le doit
+                    if (estTuUnChiffre(t[i-2]))
+                        ajouterNoeud(s,nombre(t[i-2],t[i-1]),1);
+                    else
+                        ajouterNoeud(s,t[i-1],1);
+
+                    if (estTuUnChiffre(t[i+2]))
+                        ajouterNoeud(s,nombre(t[i+1],t[i+2]),0);
+                    else
+                        ajouterNoeud(s,t[i+1],0);
+                }
+            }
+            i++;
         }
-        i++;
-    }while (i<= taille);
+        //reinitialisation des paramètres
+        tolerance++;
+        i=2;
+    }while (tolerance <= nbP);
 
     return s;
 }
 
-void ajouterNoeud(noeud **arbre, char valeur, int dir, int type)
+void ajouterNoeud(noeud **arbre, char valeur, int dir)
 {
     noeud *noeudfct;
     noeud *arbrefct = *arbre;
 
     noeud *elem = malloc(sizeof(noeud));
-    if (type == 0)
+    //Définition de l'élement que l'on ajoute
+    if (estTuUnChiffre(valeur))
     {
         elem->valeur = conversionEntier(valeur);
         elem->oper = NULL;
@@ -91,19 +115,36 @@ void ajouterNoeud(noeud **arbre, char valeur, int dir, int type)
         elem->gauche = NULL;
         elem->droite = NULL;
     }
+    printf("Hey\n");
+    noeudfct = arbrefct;
+    printf("Hey\n");
+    //Maintenant, si c'est le premier élement de calcul de l'équation, il viendra forcément se placer à droite, et on aura forcément NULL
+    if (arbrefct != NULL && arbrefct->droite == NULL)
+    {
+        printf("Premier élement\n");
+        noeudfct->droite = elem;
+        return;
+    }
+    printf("Yolo\n");
+    //sinon, pas de sortie de fonction, on peut sauter cet élement
+    //On saute le premier element (car forcement NULL a gauche et ne doit pas bouger)
+    arbrefct = arbrefct->droite;
+    //Duplication de la case mémoire pour test
+    noeudfct = arbrefct;
 
+    //Maintenant, tou se placera en fonction de la position
     if (dir == 0)
     {
         if(arbrefct)
-        do
+        while(arbrefct != NULL)
         {
             noeudfct = arbrefct;
             arbrefct = arbrefct->droite;
-            if(!arbrefct)
-            {
-                noeudfct->droite = elem;
-            }
-        }while(arbrefct);
+            printf("dafuk?\n");
+
+
+        }while(arbrefct != NULL);
+        noeudfct->droite = elem;
     }
     else if (dir == 1)
     {
@@ -198,7 +239,7 @@ int main()
     noeud *arbre = NULL;
 
     s = "A=1+2";
-    printf("%s",s);
+    printf("%s\n",s);
     arbre = creerArbre(s);
     //affichageEquation(s);
 
