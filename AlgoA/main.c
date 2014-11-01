@@ -4,112 +4,15 @@
 
 typedef struct noeud
 {
-    char valeur;
+    int valeur;
+    char oper;
     struct noeud *gauche;
     struct noeud *droite;
 } noeud ;
 
-int testEquation(char *t)
-{
-    int taille, i=0,f=0,f2=0,taille2=0;
-    taille=strlen(t);
-    //Test du signe egal
-    do
-    {
-        i++;
-        if(t[i] == '=')
-        {
-            f = 1;
-        }
-    }while ((i<= taille) && (f == 0));
-
-    if (f == 0)
-    {
-        return 1;
-    }
-    f=0;
-    //Test si avant le egal, on a lettre
-    i=0;
-    do
-    {
-        i++;
-        taille2++;
-    }while ((i<= taille) && (t[i] != '=')); // compte le nombre de caractere avant le =
-
-    i=0;
-    do
-    {
-        if (toupper(t[i]) < 65 || toupper(t[i]) > 90)
-        {
-            f = 1;
-        }
-        i++;
-    }while ((i< taille2) && (t[i] != '='));
-
-    if (f == 1)
-        return 2;
-
-    f=0;
-
-    //Test si après le egal, on a soit des caractères de calculs, soit des nombres
-    i=taille2+1;
-    printf("%d\n",taille2);
-
-    do
-    {
-        printf("%d\n",i);
-        printf("caractere : %c\n",t[i]);
-
-        if ((t[i] != '+') || (t[i] != '-') || (t[i] != '*') || (t[i] != '(') || (t[i] != ')') || (t[i] <= 47) || (t[i] >= 58)) //Si t n'est ni un nombre, ni une parenthèse, ni un *, ni un +, ni un -
-        {
-            printf("ERREUR : Caractère non autorisé trouvé après le signe =. Veuillez rééssayer.\n");
-            return 3;
-        }
-        i++;
-    }while (i< taille);
-
-
-    return 0;
-}
-
 int conversionEntier(char car)
 {
     return car-48;
-}
-
-void chaine(char *t)
-{
-    int i ;
-    char car;
-    i=0;
-    do
-        {
-            car=getchar(); //getchar , code asci de ce qui est prit au clavier
-            t[i]=car; //peut placer directement t[i]=getchar ....
-            i++;
-        }
-    while(car!='\n'); //.... remplacer car par t[i-1]
-    t[i-1]='\0'; // Pour degager le \n
-}
-
-//Partie a 2eme point , on met dans un tableau ajuster
-char *saisie()
-{
-    int t,taille ;
-    char *d , tmp[100];
-    chaine(tmp);//A
-    while ((t=testEquation(tmp)) != 0)
-    {
-        if (t == 1)
-            printf("Erreur : pas de signe égal ==> Pas une équation. Veuillez réessayer.\n");
-        if (t == 2)
-            printf("ERREUR : Caractère non accepté trouvé devant = : Veuillez n'utilisez que des lettres de l'alphabet (a..z) pour caractériser votre équation.\n");
-        chaine(tmp);
-    }
-    taille=strlen(tmp)+1;//B
-    d=(char*)malloc(taille*sizeof(char));
-    strcpy(d,tmp);
-    return d;
 }
 
 noeud *creerArbre(char *t)
@@ -118,20 +21,18 @@ noeud *creerArbre(char *t)
     int i=0,taille=0, taille2=0;
     taille=strlen(t);
 
-    s->valeur = t[0];
+    s->valeur = conversionEntier(t[0]);
+    s->oper = NULL;
     s->gauche = NULL;
     s->droite = NULL;
 
     do
     {
-       // printf("caractere : %c\n",t[i]);
-       printf("Yolo\n");
-
-        if ((t[i] == '+') || (t[i] == '-') || (t[i] == '*')) //Si t n'est ni un nombre, ni une parenthèse, ni un *, ni un +, ni un -
+        if ((t[i] == '+') || (t[i] == '-') || (t[i] == '*')) //Si t est soit +, soit -, soit *
         {
-            ajouterNoeud(s,t[i],0);
-            ajouterNoeud(s,t[i-1],1);
-            ajouterNoeud(s,t[i+1],0);
+            ajouterNoeud(s,t[i],0,1);
+            ajouterNoeud(s,t[i-1],1,0);
+            ajouterNoeud(s,t[i+1],0,0);
         }
         i++;
     }while (i< taille);
@@ -147,16 +48,26 @@ noeud *creerArbre(char *t)
     return s;
 }
 
-void ajouterNoeud(noeud **arbre, char valeur, int dir)
+void ajouterNoeud(noeud **arbre, char valeur, int dir, int type)
 {
     noeud *noeudfct;
     noeud *arbrefct = *arbre;
 
     noeud *elem = malloc(sizeof(noeud));
-    elem->valeur = valeur;
-    elem->gauche = NULL;
-    elem->droite = NULL;
-    printf("Valeur de l'element ajouté %d\n", elem->valeur);
+    if (type == 0)
+    {
+        elem->valeur = conversionEntier(valeur);
+        elem->oper = NULL;
+        elem->gauche = NULL;
+        elem->droite = NULL;
+    }
+    else
+    {
+        elem->valeur = NULL;
+        elem->oper = valeur;
+        elem->gauche = NULL;
+        elem->droite = NULL;
+    }
 
     if (dir == 0)
     {
@@ -186,19 +97,43 @@ void ajouterNoeud(noeud **arbre, char valeur, int dir)
     }
 }
 
+void calculEquation(noeud ** arbre)
+{
+    noeud *noeudfct;
+    noeud *arbrefct = *arbre;
+    // On teste si on a bien que des nombres pour calculer
+    noeudfct = arbrefct->gauche;
+    if ((noeudfct->oper == '*') || (noeudfct->oper == '+') || (noeudfct->oper == '-'))
+    {
+        calculEquation(&noeudfct);
+    }
+    noeudfct = arbrefct->droite;
+    if ((noeudfct->oper == '*') || (noeudfct->oper== '+') || (noeudfct->oper == '-'))
+    {
+        calculEquation(&noeudfct);
+    }
+    // Si on a bien que des nombres après chaque opérandes, on peut calculer
+    if (arbrefct->oper == '*')
+        arbrefct->valeur = (char)(arbrefct->gauche->valeur * arbrefct->droite->valeur);
+    else if (arbrefct->oper == '+')
+        arbrefct->valeur = (char)(arbrefct->gauche->valeur + arbrefct->droite->valeur);
+    else if (arbrefct->oper == '-')
+        arbrefct->valeur = (char)(arbrefct->gauche->valeur - arbrefct->droite->valeur);
+    return 0;
+}
+
 void affichageEquation(noeud *arbre)
 {
-    printf("Wow\n");
     if(arbre == NULL)
-        exit(1);
-    else if ((arbre->valeur == '+') || (arbre->valeur == '-') || (arbre->valeur == '*'))
+        return 0;
+    else if ((arbre->oper == '+') || (arbre->oper == '-') || (arbre->oper == '*'))
     {
         affichageEquation(arbre->gauche);
-        printf("%c",arbre->valeur);
+        printf("%c",arbre->oper);
         affichageEquation(arbre->droite);
     }
     else
-        printf("%c",arbre->valeur);
+        printf("%d",arbre->valeur);
 }
 
 int main()
@@ -207,6 +142,7 @@ int main()
     noeud *arbre = NULL;
 
     s = "A=1+2";
+    printf("%s",s);
     arbre = creerArbre(s);
     affichageEquation(s);
 
