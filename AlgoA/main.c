@@ -22,7 +22,8 @@ int nombre(int a, int b)
 
 int estTuUnChiffre(char car)
 {
-    if ((car == '+') || (car == '-') || (car == '*') || (car == '(') || (car == ')'))
+
+    if ((car == '+') || (car == '-') || (car == '*') || (car == '(') || (car == ')') || (car == '=') || (car == '\0'))
         return 0;
     else
         return 1;
@@ -39,7 +40,7 @@ int estTuUnOperande(char car)
 noeud *creerArbre(char *t)
 {
     noeud *s = malloc(sizeof(noeud));
-    int i=2,taille=0,nbPOuv=0,nbP=0,tolerance=0; // i initialisé à 2 pour sauté le =
+    int i=2,taille=0,nbPOuv=0,nbP=0,tolerance=0, p=1; // i initialisé à 2 pour sauté le =
     taille=strlen(t);
 
     s->valeur = t[0]; // implicitement, le caractère est transformé en Code ASCII
@@ -57,31 +58,35 @@ noeud *creerArbre(char *t)
             if (t[i] == '(')
             {
                 nbPOuv++;
-                nbP++;
+                printf("Parenthèse rencontrée?\n");
+                if (p == 1)
+                    nbP++;
             }
 
             if ((t[i] == ')') && (nbPOuv != 0)) // même si ça ne devrait jamais arriver, simple sécurité
                 nbPOuv--;
-
+            printf("On teste le caractère %c\n",t[i]);
             if (((t[i] == '+') || (t[i] == '-') || (t[i] == '*')) && (nbPOuv == tolerance))  //Si t est soit +, soit -, soit * et qu'en plus, le nombre de parenthèse ouverte est identique au nombre de parenthèse tolérée
             {
                 printf("Caractère entrant : %c\n",t[i]);
-                printf("dafuk?\n");
-                ajouterNoeud(s,t[i],0);
-                printf("dafuka?\n");
+                ajouterNoeud(&s,t[i],NULL,0);
+                printf("TEst des caractere aant après\n");
                 //On ajoute à la suite les caractères précedants et suivant celui traité uniquement si on a pas de parenthése aant et après l'opérateur
-                if ((estTuUnChiffre(t[i-1])) && (estTuUnChiffre(t[i+1])))
-                {
-                //Ne pas oublier de faire une conversion en nombre à 2 digits si on le doit
-                    if (estTuUnChiffre(t[i-2]))
-                        ajouterNoeud(s,nombre(conversionEntier(t[i-2]),conversionEntier(t[i-1])),1);
-                    else
-                        ajouterNoeud(s,t[i-1],1);
 
-                    if (estTuUnChiffre(t[i+2]))
-                        ajouterNoeud(s,nombre(conversionEntier(t[i+1]),conversionEntier(t[i+2])),0);
+                //Ne pas oublier de faire une conversion en nombre à 2 digits si on le doit
+                if (estTuUnChiffre(t[i-1]))
+                {
+                    if (estTuUnChiffre(t[i-2]))
+                        ajouterNoeud(&s,NULL,nombre(conversionEntier(t[i-2]),conversionEntier(t[i-1])),1);
                     else
-                        ajouterNoeud(s,t[i+1],0);
+                        ajouterNoeud(&s,NULL,conversionEntier(t[i-1]),1);
+                }
+                if (estTuUnChiffre(t[i+1]))
+                {
+                    if (estTuUnChiffre(t[i+2]))
+                        ajouterNoeud(&s,NULL,nombre(conversionEntier(t[i+1]),conversionEntier(t[i+2])),0);
+                    else
+                        ajouterNoeud(&s,NULL,conversionEntier(t[i+1]),0);
                 }
             }
             i++;
@@ -89,19 +94,58 @@ noeud *creerArbre(char *t)
         //reinitialisation des paramètres
         tolerance++;
         i=2;
+        p=0; //le nombre de parenthéses ouvrante sera ainsi bloqué
     }while (tolerance <= nbP);
 
     return s;
 }
-
-void ajouterNoeud(noeud **arbre, char valeur, int dir)
+void ajoutNoeudPlusLoin(noeud **arbre, noeud **elem)
 {
     noeud *noeudfct;
     noeud *arbrefct = *arbre;
 
+    noeudfct = arbrefct->gauche;
+
+    //Maintenant, tout se placera en fonction de la position
+    if (arbrefct->oper == NULL)
+        return;
+
+    if (noeudfct == NULL)
+    {
+        arbrefct->gauche = elem;
+        return;
+    }
+
+    noeudfct = arbrefct->droite;
+
+    if (noeudfct == NULL)
+    {
+        arbrefct->droite = elem;
+        return;
+    }
+
+    if(arbrefct->gauche != NULL)
+    {
+        ajoutNoeudPlusLoin(&arbrefct->gauche, &elem);
+        return;
+    }
+    if(arbrefct->droite != NULL)
+    {
+        ajoutNoeudPlusLoin(&arbrefct->droite, &elem);
+        return;
+    }
+}
+
+void ajouterNoeud(noeud **arbre, char valeur, int nb, int dir)
+{
+    printf("Entrée dans la fonction ajouté noeud du caractère %c et nombre %d\n",valeur,nb);
+    noeud *noeudfct;
+    noeud *arbrefct = *arbre;
+
     noeud *elem = malloc(sizeof(noeud));
+
     //Définition de l'élement que l'on ajoute
-    if (estTuUnChiffre(valeur))
+    if (valeur == NULL)
     {
         elem->valeur = conversionEntier(valeur);
         elem->oper = NULL;
@@ -115,50 +159,19 @@ void ajouterNoeud(noeud **arbre, char valeur, int dir)
         elem->gauche = NULL;
         elem->droite = NULL;
     }
-    printf("Hey\n");
     noeudfct = arbrefct;
-    printf("Hey\n");
     //Maintenant, si c'est le premier élement de calcul de l'équation, il viendra forcément se placer à droite, et on aura forcément NULL
-    if (arbrefct != NULL && arbrefct->droite == NULL)
+    if ((arbrefct != NULL) && (arbrefct->droite == NULL))
     {
-        printf("Premier élement\n");
         noeudfct->droite = elem;
         return;
     }
-    printf("Yolo\n");
+    printf("Pas le premier element !\n");
     //sinon, pas de sortie de fonction, on peut sauter cet élement
-    //On saute le premier element (car forcement NULL a gauche et ne doit pas bouger)
-    arbrefct = arbrefct->droite;
-    //Duplication de la case mémoire pour test
-    noeudfct = arbrefct;
-
-    //Maintenant, tou se placera en fonction de la position
-    if (dir == 0)
-    {
-        if(arbrefct)
-        while(arbrefct != NULL)
-        {
-            noeudfct = arbrefct;
-            arbrefct = arbrefct->droite;
-            printf("dafuk?\n");
+    //maintenant, on ajoute au plus loin dèsqu'on peut
+    ajoutNoeudPlusLoin(&arbrefct, &elem);
 
 
-        }while(arbrefct != NULL);
-        noeudfct->droite = elem;
-    }
-    else if (dir == 1)
-    {
-        if(arbrefct)
-        do
-        {
-            noeudfct = arbrefct;
-            arbrefct = arbrefct->droite;
-            if(!arbrefct)
-            {
-                noeudfct->gauche = elem;
-            }
-        }while(arbrefct);
-    }
 }
 
 void calculEquation(noeud ** arbre)
@@ -229,7 +242,7 @@ void affichageEquation(noeud *arbre)
 
         //enfin, on peut afficher l'operation
 
-        printf("%d%c%d",arbre->gauche,arbre->oper,arbre->droite->valeur);
+        printf("%d%c%d",arbre->gauche->valeur,arbre->oper,arbre->droite->valeur);
     }
 }
 
@@ -238,10 +251,11 @@ int main()
     char *s;
     noeud *arbre = NULL;
 
-    s = "A=1+2";
+    s = "J=1+2";
     printf("%s\n",s);
     arbre = creerArbre(s);
-    //affichageEquation(s);
+    affichageEquation(arbre);
+    printf("\n");
 
 
     printf("Fin %s\n",s);
