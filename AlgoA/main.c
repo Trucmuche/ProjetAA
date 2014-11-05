@@ -99,6 +99,7 @@ noeud *creerArbre(char *t)
 
     return s;
 }
+
 void ajoutNoeudPlusLoin(noeud **arbre, noeud **elem)
 {
     noeud *noeudfct;
@@ -126,12 +127,12 @@ void ajoutNoeudPlusLoin(noeud **arbre, noeud **elem)
 
     if(arbrefct->gauche != NULL)
     {
-        ajoutNoeudPlusLoin(&arbrefct->gauche, &elem);
+        ajoutNoeudPlusLoin(&arbrefct->gauche, elem);
         return;
     }
     if(arbrefct->droite != NULL)
     {
-        ajoutNoeudPlusLoin(&arbrefct->droite, &elem);
+        ajoutNoeudPlusLoin(&arbrefct->droite, elem);
         return;
     }
 }
@@ -169,9 +170,29 @@ void ajouterNoeud(noeud **arbre, char valeur, int nb, int dir)
     printf("Pas le premier element !\n");
     //sinon, pas de sortie de fonction, on peut sauter cet élement
     //maintenant, on ajoute au plus loin dèsqu'on peut
-    ajoutNoeudPlusLoin(&arbrefct, &elem);
+
+    if (placeDesQuePossible(noeudfct, elem) == 0)
+    {
+
+    }
+}
+
+int placeDesQuePossible(noeud **arbre, noeud **elem)
+{
+    noeud *noeudfct;
+    noeud *arbrefct = *arbre;
+    noeudfct = arbrefct;
+
+    if (arbrefct == NULL) return 0;
+
+    if (arbrefct->gauche == NULL)
 
 
+    if (arbrefct->gauche != NULL && arbrefct->droite != NULL)
+    {
+        if (placeDesQuePossible(arbrefct->gauche, elem) == 0)
+            placeDesQuePossible(arbrefct->droite, elem);
+    }
 }
 
 void calculEquation(noeud ** arbre)
